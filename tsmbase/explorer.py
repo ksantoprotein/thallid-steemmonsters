@@ -8,7 +8,8 @@ from threading import Thread
 from tkinter import *
 
 from tsmbase.sm import Api as SteemMonstersApi
-from tsteembase.api import Api as SteemApi
+#from tsteembase.api import Api as SteemApi
+import tsteembase.storage as storage
 
 from tsmbase.findmatch import FindMatch
 
@@ -30,7 +31,7 @@ class Explorer():
 	def __init__(self):
 		
 		self.sm = SteemMonstersApi()
-		self.api = SteemApi()
+		#self.api = SteemApi()
 		self.fm = FindMatch()
 		self.root = Tk()
 		
@@ -41,6 +42,9 @@ class Explorer():
 			raw = f.read()
 		self.fm.accounts_list = raw.replace('\n', ' ').split()
 		print('load accounts:', self.fm.accounts_list)
+		
+		self.fm.nodes_list = storage.nodes
+		print('load nodes:', self.fm.nodes_list)
 		
 		self.root.title('Explorer SteemMonsters')
 		self.root.minsize(700, 450)
@@ -143,8 +147,12 @@ class Explorer():
 	##### ##### ##### ##### #####
 
 	def cmd_button_start(self):
+	
+		self.fm.node = self.node.get()
+
 		self.button_start["state"] = DISABLED
 		self.button_stop["state"] = NORMAL
+		self.node_entry["state"] = DISABLED
 		for liga in self.liga_radiobuttons:
 			self.liga_radiobuttons[liga]["state"] = DISABLED
 			
@@ -158,6 +166,7 @@ class Explorer():
 	def cmd_button_stop(self):
 		self.button_start["state"] = NORMAL
 		self.button_stop["state"] = DISABLED
+		self.node_entry["state"] = NORMAL
 		for liga in self.liga_radiobuttons:
 			self.liga_radiobuttons[liga]["state"] = NORMAL
 		print('end work')
@@ -210,15 +219,19 @@ class Explorer():
 		#self.unit_entry.place(x = 5, y = 0, width = 185, height = 25)
 		self.unit = StringVar(value = self.fm.accounts_list[0])
 		self.unit_entry = OptionMenu(unit_frame, self.unit, *self.fm.accounts_list)
-		self.unit_entry.place(x = 5, y = 0, width = 185, height = 25)
+		self.unit_entry.place(x = 5, y = 0, width = 150, height = 25)
 		
-		self.unit_vs_label = Label(unit_frame, text = 'VS')
-		self.unit_vs_label.place(x = 200, y = 0, width = 250, height = 25)
+		#self.unit_vs_label = Label(unit_frame, text = 'VS')
+		#self.unit_vs_label.place(x = 150, y = 0, width = 150, height = 25)
 		
 		self.utc = StringVar(value = 'UTC+3')
 		utc_list = ['UTC' + str(n) for n in range(-12, 13)]
 		self.utc_optionmenu = OptionMenu(unit_frame, self.utc, *utc_list)
-		self.utc_optionmenu.place(x = 205, y = 0, width = 100, height = 25)
+		self.utc_optionmenu.place(x = 155, y = 0, width = 100, height = 25)
+		
+		self.node = StringVar(value = self.fm.nodes_list[0])
+		self.node_entry = OptionMenu(unit_frame, self.node, *self.fm.nodes_list)
+		self.node_entry.place(x = 255, y = 0, width = 190, height = 25)
 		
 		self.unit_opponent_label = Label(unit_frame, justify = LEFT, anchor = 'nw', bg = "white")		#
 		self.unit_opponent_label.place(x = 455, y = 0, width = 235, height = 25)

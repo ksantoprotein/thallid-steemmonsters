@@ -34,13 +34,15 @@ class FindMatch():
 						
 		self.flag = True
 		self.sm = SteemMonstersApi()
-		self.api = SteemApi()
+		#self.api = SteemApi()
 		#self.sm.load_cards()
 		
 	##### ##### #####
 	
 	def run(self, liga):
 		#self.scan_blocks(self.resolve_block)
+		print('connect to', self.node)
+		self.api = SteemApi(nodes = [self.node])
 		self.liga_active = liga
 		self.flag = True
 		self.players = {acc: {} for acc in self.accounts_list}	### Список своих аккаунтов для отслеживания {player:}
