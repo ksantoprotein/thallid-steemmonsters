@@ -23,7 +23,8 @@ setuptools.setup(
 	long_description_content_type = 'text/markdown',
 	url = 'https://github.com/ksantoprotein/thallid-steemmonsters',
 	packages = ['tsmbase'],
-	
+	package_data={'': ['png/small/*.png']},
+	#data_files=[("yourdir", ["additionalstuff/moredata.txt", "INFO.txt"])],	
 	#download_url='https://github.com/bitfag/golos-piston/tarball/' + VERSION,
 	classifiers=[
 		'License :: OSI Approved :: MIT License',
