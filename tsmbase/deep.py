@@ -68,6 +68,7 @@ class Deep():
 			json.dump(self.state, f, ensure_ascii = False)
 		print('end save state')
 		print('save decks')
+		'''
 		with open(self.files["state_csv"], 'w') as f:
 			f.write(','.join(['Win', 'Total', 'Ruleset1', 'Ruleset2', 'Liga', 'Mana_cap', 'Color', 'Summoner']) + '\n')
 			for key, value in self.state["decks"].items():
@@ -82,7 +83,7 @@ class Deep():
 			f.write(';'.join(['Win', 'Total', 'Ruleset1', 'Ruleset2', 'Liga', 'Mana_cap', 'Color', 'Summoner']) + '\n')
 			for key, value in self.decks.items():
 				f.write(';'.join([str(value["win"]), str(value["total"]), key]) + '\n')
-			
+		'''
 		print('end save decks')
 		
 		
@@ -150,7 +151,7 @@ class Deep():
 			self.state["last_block"] = line["block_num"]	###
 			
 			s += 1
-			if s >= 100:
+			if s >= 1000:
 				self.save_state()
 				s = 0
 			

@@ -3,6 +3,7 @@
 from pprint import pprint
 from time import sleep, time
 import json
+from datetime import date, datetime, timedelta
 
 from requests import Session
 
@@ -13,6 +14,7 @@ from itertools import combinations
 
 time_step = 2
 n_step = 10
+timeFormat = '%Y-%m-%dT%H:%M:%S.%fZ'
 
 
 class Http():
@@ -56,7 +58,11 @@ class Api(Http, Root):
 		
 		self.cards = self.get_card_details()
 		self.card_names = {card["id"]: card["name"] for card in self.cards}
-
+		
+		self.quests = {}		# Цветовая гамма квестов
+		for quest in data["quests"]:
+			self.quests[quest["name"]] = quest["data"]["color"]
+		
 		print('version', self.version, self.url,  self.url_api, len(self.cards))
 		#pprint(self.rulesets)
 		
@@ -76,6 +82,10 @@ class Api(Http, Root):
 		# ratings = {"chemp": [2800, 10000], "gold": [1900, 2799], "silver": [1000, 1899], "bronze": [100, 999]}
 		liga = [cmd for cmd, value in self.ratings.items() if value[0] <= int(rating) <= value[1]]
 		return(liga[0] if liga else None)
+	
+	def get_transaction(self, trx):
+		cmd = ''.join([self.url, 'transactions/lookup?trx_id=', trx])
+		return(self.get_response(cmd))
 	
 	
 	### PLAYER ###
@@ -111,13 +121,21 @@ class Api(Http, Root):
 		
 	def get_player_quests(self, player):
 		cmd = ''.join([self.url, 'players/quests?username=', player])
-		return(self.get_response(cmd))
+		tx = self.get_response(cmd)
+		if isinstance(tx, list):
+			data = tx[0]
+			data["color"] = self.quests[data["name"]]
+			data["time_for_new_quest"] = 23 * 60 - int((datetime.utcnow() - datetime.strptime(data["created_date"], timeFormat)).total_seconds() / 60)
+		else:
+			print('error quest', data)
+			return False
+		return(data)
 
 	def is_player_quests(self, player):
 		data = self.get_player_quests(player)
-		if isinstance(data, list):
-			if int(data[0]["completed_items"]) < int(data[0]["total_items"]):
-				return({data[0]["name"]: int(data[0]["completed_items"])})
+		if data:
+			if int(data["completed_items"]) < int(data["total_items"]):
+				return({data["name"]: int(data["completed_items"])})
 		else:
 			print('error quest', data)
 		return False
@@ -159,6 +177,23 @@ class Api(Http, Root):
 	def get_cards_stats(self):
 		cmd = ''.join([self.url, 'cards/stats'])
 		return(self.get_response(cmd))
+		
+	def get_cards_reward(self, trx_id):
+		tx = self.get_transaction(trx_id)
+
+		error = tx.get("error", None)
+		if error:
+			pprint(tx)
+			return False
+		else:
+			data = json.loads(tx["trx_info"]["result"])
+			
+			for card in data:
+				name = self.card_names[card["card_detail_id"]]
+				gold = 'Gold' if card["gold"] else 'Common'
+				print(gold, name, card["uid"])
+
+		return True
 		
 	def find_cards(self, id):
 		ids = ','.join(id) if isinstance(id, list) else id
