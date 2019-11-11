@@ -154,6 +154,14 @@ class Api(Http, Root):
 				}
 		return(data)
 		
+	def get_player_dec(self, player):
+		tx_acc = self.get_player_login(player)
+		amount = 0
+		for balance in tx_acc["balances"]:
+			if balance["token"] == 'DEC':
+				amount = float(balance["balance"])
+		return(amount)
+	
 		
 	### CARDS ###
 	
@@ -180,7 +188,7 @@ class Api(Http, Root):
 		
 	def get_cards_reward(self, trx_id):
 		tx = self.get_transaction(trx_id)
-
+		uids = []
 		error = tx.get("error", None)
 		if error:
 			pprint(tx)
@@ -192,8 +200,10 @@ class Api(Http, Root):
 				name = self.card_names[card["card_detail_id"]]
 				gold = 'Gold' if card["gold"] else 'Common'
 				print(gold, name, card["uid"])
+				uids.append(card["uid"])
 
-		return True
+		return(uids)
+		
 		
 	def find_cards(self, id):
 		ids = ','.join(id) if isinstance(id, list) else id
