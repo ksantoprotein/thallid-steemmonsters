@@ -319,7 +319,7 @@ class Api(Http, Root):
 		return(self.get_response(cmd))
 
 	def get_opponent_colors(self, player):
-		colors = {}
+		total, colors = 0, {}
 		data = self.get_battle_history(player)
 		if data:
 			for line in data["battles"]:
@@ -334,6 +334,8 @@ class Api(Http, Root):
 									color = team["color"]
 									colors.setdefault(color, 0)
 									colors[color] += 1
+									total += 1
+		colors["procent"] = {color: str(round(100 * value / total, 2)) + '%' for color, value in colors.items()}
 		return(colors)
 	
 	

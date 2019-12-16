@@ -46,6 +46,7 @@ class FindMatch():
 		self.liga_active = liga
 		self.flag = True
 		self.players = {acc: {} for acc in self.accounts_list}	### Список своих аккаунтов для отслеживания {player:}
+		self.opponents = [] 	### Список оппонентов, чтобы их подсвечивать
 		
 		sm_thread = Thread(target = self.scan_blocks, args = [self.resolve_block], daemon = True)
 		sm_thread.start()
@@ -125,7 +126,7 @@ class FindMatch():
 				### Список trx_id ожидающих и не только
 				self.sm_battles_list[trx_id] = {"player": player, "rating": rating, "timestamp": timestamp, "hide": hide}
 				#print('add trx', trx_id)
-				print(timestamp, player, liga, rating)
+				#print(timestamp, player, liga, rating)
 				
 				
 	def check_battles(self):
@@ -154,8 +155,12 @@ class FindMatch():
 					
 					if player in self.players:
 						self.players[player]["opponent_player"] = opponent_player
-						self.players[player]["submit_hashed_team"] = self.sm.is_submit_hashed_team(opponent_player)						
-						#print(player, 'VS', opponent_player)
+						self.players[player]["submit_hashed_team"] = self.sm.is_submit_hashed_team(opponent_player)
+						if opponent_player not in self.opponents:
+							self.opponents.append(opponent_player)
+							opponent_colors = self.sm.get_opponent_colors(opponent_player)
+							print(player, 'VS', opponent_player)
+							pprint(opponent_colors["procent"])
 					else:
 						self.sm_vs_list.append([timestamp, player, 'VS', opponent_player])
 						list_for_del.append(trx_id)
@@ -171,6 +176,8 @@ class FindMatch():
 					if player in self.players:
 						print('round complete')
 						self.players[player] = {}		# Обнуление
+						self.opponents.remove(opponent_player)
+						
 						#pprint(battle)
 					self.sm_vs_list.append([timestamp, player, 'VS', opponent_player])
 					
