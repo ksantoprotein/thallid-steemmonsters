@@ -227,6 +227,14 @@ class Api(Http, Root):
 				amount = float(balance["balance"])
 		return(amount)
 	
+	def get_player_ecr(self, player):
+		tx_acc = self.get_player_details(player)
+		capture_rate, last_reward_block = tx_acc["capture_rate"], tx_acc["last_reward_block"]
+		tx = self.settings()
+		last_block, ecr_regen_rate = tx["last_block"], tx["dec"]["ecr_regen_rate"]
+		
+		capture_rate += int(ecr_regen_rate * (last_block - last_reward_block))
+		return(capture_rate)
 		
 	### CARDS ###
 	
@@ -285,7 +293,7 @@ class Api(Http, Root):
 		self.card_photos = {name: PhotoImage(file = file) for name, file in self.card_files.items()}
 	
 	def resolve_collection(self, collection):
-		cards = {}
+		cards = {uid: {"name": name, "level": 1} for name, uid in self.starters.items()}
 		for card in collection["cards"]:
 			if not(card["market_id"]) and (not(card["delegated_to"]) or card["delegated_to"] == collection["player"]):
 				cards[card["uid"]] = {"name": self.card_names[card["card_detail_id"]], "level": card["level"]}
@@ -350,7 +358,7 @@ class Api(Http, Root):
 				
 				winner = details["winner"]	###
 				loser = details["loser"]	###
-				pre_battle = details["pre_battle"]	###
+				#pre_battle = details["pre_battle"]	###
 				
 				#seed rounds pre_battle
 				
@@ -363,8 +371,8 @@ class Api(Http, Root):
 								login, liga = team["player"], self.is_rating(team["rating"])
 								battle["liga"] = liga
 								battle["color"] = liga
-								print(team["color"])
-								input()
+								#print(team["color"])
+								#input()
 						
 						
 							#oppenent_color = result["details"][team_opponent]["color"]

@@ -84,9 +84,61 @@ class Deep():
 			
 		print('end save state')
 		
+	##### ##### ##### ##### #####
+	
+	def load_moon(self, login):
+	
+		collection = self.sm.get_player_collection(login)
+		
+		self.moon_cards = {}
+		for uid, card in collection.items():
+			name, level = card["name"], card["level"]
+			self.moon_cards.setdefault(name, {"level": level, "uid": uid})
+			if level > self.moon_cards[name]["level"]:
+				self.moon_cards[name] = {"level": level, "uid": uid}
+
+		self.moon_decks = {liga: {} for liga in self.sm.ratings}
+		for liga, v1 in self.state["decks"].items():
+			for ruleset, v2 in v1.items():
+				for mana_cap, v3 in v2.items():
+					for team, v4 in v3.items():
+						color, *combo = team.split(';')
+						
+						win, total = v4["win"], v4["total"]
+					
+						for i in range(len(self.sm.colors) - 1):
+							opponent_color = self.sm.colors[i]
+							win_color = v4[opponent_color]
+							k_moon = round((win_color / total) * (win / total) * (win + total), 3)
+						
+							self.moon_decks[liga].setdefault(ruleset, {})
+							self.moon_decks[liga][ruleset].setdefault(mana_cap, {})
+							self.moon_decks[liga][ruleset][mana_cap].setdefault(opponent_color, {})
+							self.moon_decks[liga][ruleset][mana_cap][opponent_color].setdefault(color, {"team": ['xxx'], "k_moon": -100, "best": combo, "k_best": k_moon})
+							if k_moon > self.moon_decks[liga][ruleset][mana_cap][opponent_color][color]["k_best"]:
+								self.moon_decks[liga][ruleset][mana_cap][opponent_color][color]["k_best"] = k_moon
+								self.moon_decks[liga][ruleset][mana_cap][opponent_color][color]["best"] = combo
+							
+							flag = True
+							
+							for card in combo:
+								name, level = card.split(':')
+								level = int(level)
+								if name in self.moon_cards:
+									for k in range(level - self.moon_cards[name]["level"]):
+										k_moon = round(k_moon * 0.75, 3)
+								else:
+									flag = False
+									break
+
+							if flag:
+								
+								if k_moon > self.moon_decks[liga][ruleset][mana_cap][opponent_color][color]["k_moon"]:
+									self.moon_decks[liga][ruleset][mana_cap][opponent_color][color]["k_moon"] = k_moon
+									self.moon_decks[liga][ruleset][mana_cap][opponent_color][color]["team"] = combo
 		
 	##### ##### ##### ##### #####
-		
+	
 	def upload(self):
 	
 		block_end = self.api.get_irreversible_block()
@@ -167,44 +219,19 @@ class Deep():
 				break
 		return
 		
+		
 	def convert_team_to_csv(self, team):
 		liga = self.sm.is_rating(team["rating"])
 		if liga:
 			try:
-				color = team["color"]
 				summoner = self.sm.card_names[team["summoner"]["card_detail_id"]] + ':' + str(team["summoner"]["level"])
 				monsters = [self.sm.card_names[monster["card_detail_id"]] + ':' + str(monster["level"]) for monster in team["monsters"]]
 				combo = self.sm.check_rarity([summoner] + monsters, liga)
+				color = self.sm.check_color(combo)
 				csv = ';'.join([color] + combo)
 				return(csv)
 			except:
 				pprint(team)
 				input('Error convert')
 		return False
-		
-
-	def resolve_players(self, players):
-	
-		for player, oppenent in [ [0, 1], [1, 0]]:
-			player_name = players[player]["name"]
-			oppenent_name = players[oppenent]["name"]
-			
-			d = players[player]["initial_rating"] - players[player]["final_rating"]
-			win, lose = [1, 0] if d > 0 else [0, 1]
-			
-			self.state["players"].setdefault(player_name, {})
-			self.state["players"][player_name].setdefault(oppenent_name, [0, 0])
-			self.state["players"][player_name][oppenent_name][0] += win
-			self.state["players"][player_name][oppenent_name][1] += lose
-			
-			d_rating = players[player]["initial_rating"] - players[oppenent]["initial_rating"]
-			if d_rating >=0:
-				rating = str(int(d_rating / 5) * 5)		# округление до шага 5
-				self.state["ratings"].setdefault(rating, [0, 0])
-				self.state["ratings"][rating][0] += win
-				self.state["ratings"][rating][1] += lose
-			
-		return
-		
-		
 		
